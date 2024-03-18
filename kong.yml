@@ -1,0 +1,71 @@
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: service_create
+    url: http://web-create:8002
+    routes:
+      - name: create_route
+        paths:
+          - /app
+        methods:
+          - POST
+          - OPTIONS
+  
+  - name: service_read
+    url: http://web-read:8003
+    routes:
+      - name: read_route
+        paths:
+          - /app
+        methods:
+          - GET
+
+  - name: service_update
+    url: http://web-update:8004
+    routes:
+      - name: update_route
+        paths:
+          - /app
+        methods:
+          - PUT
+
+  - name: service_delete
+    url: http://web-delete:8005
+    routes:
+      - name: delete_route
+        paths:
+          - /app
+        methods:
+          - DELETE
+
+  - name: service_log
+    url: http://logger:8006
+    routes:
+      - name: post_route
+        paths:
+          - /log
+        methods:
+          - POST
+      - name: get_route
+        paths:
+          - /log
+        methods:
+          - GET 
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      headers:
+        - Authorization
+        - Content-Type
+      exposed_headers:
+        - X-Total-Count
+      max_age: 3600                

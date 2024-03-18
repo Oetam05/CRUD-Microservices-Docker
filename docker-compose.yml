@@ -1,0 +1,112 @@
+version: "3.8"
+
+services:
+
+  kong:
+    image: kong:latest
+    hostname: kong
+    container_name: kong_gateway
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    environment: 
+      - KONG_DATABASE=off
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl
+      - KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml
+      - KONG_DNS_ORDER=LAST, A, CNAME
+      - KONG_PLUGINS=cors
+    depends_on:
+      - web-create
+      - web-read
+      - web-update
+      - web-delete
+      - logger
+    volumes:
+      - ./:/kong/declarative
+    networks:
+      - my_network
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=gestion_datos
+      - POSTGRES_USER=postgres  
+      - POSTGRES_PASSWORD=password123
+    ports:
+      - "5432:5432"  # Mapea el puerto 5432 para acceder a la base de datos desde el host    
+    networks:
+      - my_network
+
+  web-create:
+    build: ./service_create
+    command: >
+      sh -c "python manage.py makemigrations &&
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8002"
+    depends_on:
+      - db
+    ports:
+      - "8002:8002"
+    volumes:
+      - media-volume:/path/to/media
+    networks:
+      - my_network  
+
+  web-read:
+    build: ./service_read
+    command: python manage.py runserver 0.0.0.0:8003
+    depends_on:
+      - db
+    ports:
+      - "8003:8003"
+    volumes:
+      - media-volume:/path/to/media   
+    networks:
+      - my_network 
+
+  web-update:
+    build: ./service_update
+    command: python manage.py runserver 0.0.0.0:8004
+    depends_on:
+      - db
+    ports:
+      - "8004:8004"
+    volumes:
+      - media-volume:/path/to/media
+    networks:
+      - my_network
+
+  web-delete:
+    build: ./service_delete
+    command: python manage.py runserver 0.0.0.0:8005
+    depends_on:
+      - db
+    ports:
+      - "8005:8005"    
+    networks:
+      - my_network
+
+  logger:
+    build: ./service_log
+    command: >
+      sh -c "python manage.py makemigrations &&
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8006"
+    depends_on:
+      - db
+    ports:
+      - "8006:8006"    
+    networks:
+      - my_network
+
+volumes:
+  media-volume:
+
+networks:
+  my_network:
